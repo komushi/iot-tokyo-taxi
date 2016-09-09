@@ -224,8 +224,11 @@ live-server
 東京タクシー降車イベント
 http://localhost:8080/#/tokyo23TaxiEvents
 
+![Districts](https://rawgit.com/komushi/iot-tokyo-taxi/master/image/districts.png)
+
 ## 3-3. Start GUI
 
 東京トップ１０タクシー・ルート
 http://localhost:8080/#/tokyo23TopRoutes
 
+![Top Routes](https://rawgit.com/komushi/iot-tokyo-taxi/master/image/top_routes.png)
