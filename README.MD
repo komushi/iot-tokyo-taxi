@@ -32,7 +32,7 @@ http://localhost:9393/dashboard
 
 ## 1-2. Register Stream Apps
 
-![Spring Cloud Stream Apps](https://github.com/komushi/iot-tokyo-taxi/master/image/apps.png)
+![Spring Cloud Stream Apps](https://rawgit.com/komushi/iot-tokyo-taxi/master/image/apps.png)
 
 ### 1-2-1. Register with dashboard
 
@@ -63,9 +63,9 @@ app register --name multi-topic-stomp-sink-rabbit --type sink --uri 'file:///tem
 
 ## 1-3. Create Stream
 
-![Create Stream](https://github.com/komushi/iot-tokyo-taxi/master/image/create_stream.png)
+![Create Stream](https://rawgit.com/komushi/iot-tokyo-taxi/master/image/create_stream.png)
 
-![Created Streams](https://github.com/komushi/iot-tokyo-taxi/master/image/streams.png)
+![Created Streams](https://rawgit.com/komushi/iot-tokyo-taxi/master/image/streams.png)
 
 ### 1-3-1. Create on dashboard
 
