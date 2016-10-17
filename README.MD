@@ -5,11 +5,18 @@
 * Spring Cloud Dataflow Shell
 * Spring Cloud Dataflow Server - Local
 * RabbitMQ
+* MongoDB with block-level polygon data of Tokyo - to convert coordinates to block names
 
 ### 1-1-1. Start RabbitMQ
 
 ```
 rabbitmq-server
+```
+
+Or
+
+```
+brew services start rabbitmq
 ```
 
 ### 1-1-2. Start Geode
@@ -24,7 +31,11 @@ java -jar spring-boot-geode-server-0.0.1-SNAPSHOT.jar --properties.batchSize=5
 java -jar spring-cloud-dataflow-server-local-1.0.0.RELEASE.jar --binder=rabbit
 ```
 
-## 1-1-4. Start dashboard
+## 1-1-4. Start MongoDB Server
+
+[Polygon data in MongoDB](/mongodb_data)
+
+## 1-1-5. Start dashboard
 
 ```
 http://localhost:9393/dashboard
