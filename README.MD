@@ -33,7 +33,7 @@ java -jar spring-cloud-dataflow-server-local-1.0.0.RELEASE.jar --binder=rabbit
 
 ## 1-1-4. Start MongoDB Server
 
-[Polygon data in MongoDB](/mongodb_data)
+[Polygon data in MongoDB](/solution/mongodb_data)
 
 ## 1-1-5. Start dashboard
 
