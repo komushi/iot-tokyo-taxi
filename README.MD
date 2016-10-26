@@ -25,10 +25,18 @@ brew services start rabbitmq
 java -jar spring-boot-geode-server-0.0.1-SNAPSHOT.jar --properties.batchSize=5
 ```
 
-### 1-1-3. Start Dataflow Server Local using RabbitMQ
+### 1-1-3. Get & Start Dataflow Server Local using RabbitMQ
 
 ```
-java -jar spring-cloud-dataflow-server-local-1.0.0.RELEASE.jar --binder=rabbit
+wget http://repo.spring.io/release/org/springframework/cloud/spring-cloud-dataflow-server-cloudfoundry/1.0.1.RELEASE/spring-cloud-dataflow-server-cloudfoundry-1.0.1.RELEASE.jar
+
+java -jar spring-cloud-dataflow-server-local-1.0.1.RELEASE.jar --binder=rabbit
+```
+
+```
+wget http://repo.spring.io/release/org/springframework/cloud/spring-cloud-dataflow-shell/1.0.1.RELEASE/spring-cloud-dataflow-shell-1.0.1.RELEASE.jar
+
+java -jar spring-cloud-dataflow-shell-1.0.1.RELEASE.jar
 ```
 
 ## 1-1-4. Start MongoDB Server
