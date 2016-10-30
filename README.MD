@@ -12,6 +12,7 @@ http://www.slideshare.net/LeiXu8/event-driven-streaming-analytics
 * [Local Deployment with Spring Cloud Stream Apps](/LOCAL_SCS.MD)
 
 ## 2. Spring Cloud Stream with Spring Cloud Data Flow
+### Different Resource Management Options:
 * [Spring Cloud Data Flow Local Server](/LOCAL_SCDF.MD)
 * [Spring Cloud Data Flow Cloud Foundry Server](/PCFDEV_SCDF.MD)
 * Spring Cloud Data Flow Apache Yarn Server

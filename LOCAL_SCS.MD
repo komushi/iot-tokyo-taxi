@@ -28,13 +28,13 @@ java -jar spring-boot-geode-server-0.0.1-SNAPSHOT.jar --properties.batchSize=5
 java -jar http-source-rabbit-1.0.2.RELEASE.jar --spring.cloud.stream.bindings.output.destination=http_raw --server.port=9000
 ```
 
-### 1-2-2. Geocoding Processor to handle the data from HTTP Source(2-2-1)
+### 1-2-2. Geocoding Processor to handle the data from HTTP Source(1-2-1)
 
 ```
 java -jar spring-cloud-stream-processor-geocoding-reverse-0.0.1-SNAPSHOT.jar --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --properties.mongo.database=geojson --properties.mongo.collection=blocks --server.port=9100
 ```
 
-### 1-2-3. GemFire Sink to send geocoded data(2-2-2) to Geode
+### 1-2-3. GemFire Sink to send geocoded data(1-2-2) to Geode
 
 ```
 java -jar gemfire-sink-rabbit-1.0.2.RELEASE.jar --gemfire.region.region-name=RegRaw --gemfire.json=true --gemfire.key-expression="payload.getField('uuid')" --spring.cloud.stream.bindings.input.destination=transform_geotuple --spring.cloud.stream.bindings.input.group=gemfire_rawjson --server.port=9200
@@ -46,13 +46,13 @@ java -jar gemfire-sink-rabbit-1.0.2.RELEASE.jar --gemfire.region.region-name=Reg
 java -jar gemfire-source-rabbit-1.0.2.RELEASE.jar --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegRouteTopTen --spring.cloud.stream.bindings.output.destination=gemfire_topoute --server.port=9300
 ```
 
-### 1-2-5. WebSocket Sink to retrieve top route count data(2-2-4) and send to Stomp
+### 1-2-5. WebSocket Sink to retrieve top route count data(1-2-4) and send to Stomp
 
 ```
 java -jar spring-cloud-stream-sink-stomp-0.0.1-SNAPSHOT.jar --logging.level.io.pivotal.spring.cloud.stream.sink=TRACE --spring.cloud.stream.bindings.input.destination=gemfire_topoute --spring.cloud.stream.bindings.input.group=1 --stomp.topic=toproute --stomp.withsockjs=true --server.port=9400
 ```
 
-### 1-2-6. WebSocket Sink to retrieve geocoded data(2-2-3) and send to Stomp
+### 1-2-6. WebSocket Sink to retrieve geocoded data(1-2-3) and send to Stomp
 
 ```
 java -jar spring-cloud-stream-sink-stomp-multi-topic-0.0.1-SNAPSHOT.jar --logging.level.io.pivotal.spring.cloud.stream.sink=INFO --spring.cloud.stream.bindings.input.destination=transform_geotuple --spring.cloud.stream.bindings.input.group=1 --stomp.withsockjs=true --stomp.topicPath=/dropoffDistrictCode --server.port=9210
@@ -64,7 +64,7 @@ java -jar spring-cloud-stream-sink-stomp-multi-topic-0.0.1-SNAPSHOT.jar --loggin
 java -jar gemfire-source-rabbit-1.0.2.RELEASE.jar --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegDropoffDistrictTop --spring.cloud.stream.bindings.output.destination=gemfire_topdropoff --server.port=9310
 ```
 
-### 1-2-8. WebSocket Sink to send dropoff district count data(2-2-7) to Stomp
+### 1-2-8. WebSocket Sink to send dropoff district count data(1-2-7) to Stomp
 
 ```
 java -jar spring-cloud-stream-sink-stomp-0.0.1-SNAPSHOT.jar --logging.level.io.pivotal.spring.cloud.stream.sink=TRACE --spring.cloud.stream.bindings.input.destination=gemfire_topdropoff --spring.cloud.stream.bindings.input.group=1 --stomp.topic=topdropoff --stomp.withsockjs=true --server.port=9410
