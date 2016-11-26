@@ -9,7 +9,7 @@ mongod
 Or
 
 ```
-brew services stop mongodb
+brew services start mongodb
 ```
 
 ## 1-2. Import data

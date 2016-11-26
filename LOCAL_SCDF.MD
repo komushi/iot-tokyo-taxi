@@ -28,7 +28,7 @@ java -jar spring-boot-geode-server-0.0.1-SNAPSHOT.jar --properties.batchSize=5
 ### 1-1-3. Get & Start Dataflow Server Local using RabbitMQ
 
 ```
-wget http://repo.spring.io/release/org/springframework/cloud/spring-cloud-dataflow-server-cloudfoundry/1.0.1.RELEASE/spring-cloud-dataflow-server-cloudfoundry-1.0.1.RELEASE.jar
+wget http://repo.spring.io/release/org/springframework/cloud/spring-cloud-dataflow-server-local/1.0.1.RELEASE/spring-cloud-dataflow-server-local-1.0.1.RELEASE.jar
 
 java -jar spring-cloud-dataflow-server-local-1.0.1.RELEASE.jar --binder=rabbit
 ```
