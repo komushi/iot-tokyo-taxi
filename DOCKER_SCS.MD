@@ -20,7 +20,7 @@ brew services start rabbitmq
 ### 1-1-2. Start Geode
 
 ```
-java -jar spring-boot-geode-server-0.0.1-SNAPSHOT.jar --properties.batchSize=5
+java -jar spring-boot-geode-server-0.0.1-SNAPSHOT.jar --properties.batchSize=5 --properties.locatorAddress=192.168.11.111[10334] --properties.bindAddress=192.168.11.111 --properties.hostNameForClients=192.168.11.111
 ```
 
 ## 1-1-3. Start MongoDB Server
@@ -49,7 +49,7 @@ docker run springcloudstream/gemfire-sink-rabbit:1.0.2.RELEASE --gemfire.pool.ho
 ### 1-2-4. GemFire Source to retrieve top route count data from Geode
 
 ```
-docker run springcloudstream/gemfire-source-rabbit:1.0.2.RELEASE --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegRouteTopTen --spring.cloud.stream.bindings.output.destination=gemfire_topoute --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run springcloudstream/gemfire-source-rabbit:1.0.2.RELEASE --gemfire.pool.host-addresses=192.168.11.111:10334 --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegRouteTopTen --spring.cloud.stream.bindings.output.destination=gemfire_topoute --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-5. WebSocket Sink to retrieve top route count data(1-2-4) and send to Stomp
@@ -61,19 +61,19 @@ docker run -p 9400:8080 komushi/spring-cloud-stream-sink-stomp --stomp.topic=top
 ### 1-2-6. WebSocket Sink to retrieve geocoded data(1-2-3) and send to Stomp
 
 ```
-docker run -p 9210:8080 komushi/spring-cloud-stream-sink-stomp-multi-topic --withsockjs=true --topic-path=/dropoffDistrictCode --spring.cloud.stream.bindings.input.destination=transform_geotuple --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run -p 9210:8080 komushi/spring-cloud-stream-sink-stomp-multi-topic --stomp.withsockjs=true --stomp.topic-path=/dropoffDistrictCode --spring.cloud.stream.bindings.input.destination=transform_geotuple --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-7. GemFire Source to retrieve dropoff district count data from Geode
 
 ```
-docker run springcloudstream/gemfire-source-rabbit --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegDropoffDistrictTop --spring.cloud.stream.bindings.output.destination=gemfire_topdropoff --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run springcloudstream/gemfire-source-rabbit:1.0.2.RELEASE --gemfire.pool.host-addresses=192.168.11.111:10334 --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegDropoffDistrictTop --spring.cloud.stream.bindings.output.destination=gemfire_topdropoff --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-8. WebSocket Sink to send dropoff district count data(1-2-7) to Stomp
 
 ```
-docker run -p 9410:8080 komushi/spring-cloud-stream-sink-stomp --stomp.topic=topdropoff --stomp.withsockjs=true --spring.cloud.stream.bindings.input.destination=gemfire_topdropoff --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run -p 9410:8080 komushi/spring-cloud-stream-sink-stomp --logging.level.io.pivotal.spring.cloud.stream.sink=TRACE --stomp.topic=topdropoff --stomp.withsockjs=true --spring.cloud.stream.bindings.input.destination=gemfire_topdropoff --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 # 2. Visualization
