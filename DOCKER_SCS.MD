@@ -20,7 +20,7 @@ brew services start rabbitmq
 ### 1-1-2. Start Geode
 
 ```
-java -jar spring-boot-geode-server-0.0.1-SNAPSHOT.jar --properties.batchSize=5 --properties.locatorAddress=192.168.11.111[10334] --properties.bindAddress=192.168.11.111 --properties.hostNameForClients=192.168.11.111
+docker run -p 40404:40404 komushi/spring-boot-geode-server:1.0.0.APACHE-GEODE-INCUBATING-M2 --properties.useJmx=false
 ```
 
 ## 1-1-3. Start MongoDB Server
@@ -31,49 +31,49 @@ java -jar spring-boot-geode-server-0.0.1-SNAPSHOT.jar --properties.batchSize=5 -
 ### 1-2-1. HTTP Source to retrieve taxi raw event data
 
 ```
-docker run -p 9000:8080 springcloudstream/http-source-rabbit --spring.cloud.stream.bindings.output.destination=http_raw --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run -p 9000:8080 springcloudstream/http-source-rabbit --spring.cloud.stream.bindings.output.destination=http_raw --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-2. Geocoding Processor to handle the data from HTTP Source(1-2-1)
 
 ```
-docker run komushi/spring-cloud-stream-processor-geocoding-reverse --properties.mongo.hostName=192.168.11.111 --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run komushi/spring-cloud-stream-processor-geocoding-reverse --properties.mongo.hostName=192.168.11.104 --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-3. GemFire Sink to send geocoded data(1-2-2) to Geode
 
 ```
-docker run springcloudstream/gemfire-sink-rabbit:1.0.2.RELEASE --gemfire.pool.host-addresses=192.168.11.111:10334 --gemfire.region.region-name=RegRaw --gemfire.json=true --gemfire.key-expression="payload.getField('uuid')" --spring.cloud.stream.bindings.input.destination=transform_geotuple --spring.cloud.stream.bindings.input.group=gemfire_rawjson --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run springcloudstream/gemfire-sink-rabbit:1.0.2.RELEASE --gemfire.pool.connect-type=server --gemfire.pool.host-addresses=192.168.11.104:40404 --gemfire.region.region-name=RegRaw --gemfire.json=true --gemfire.key-expression="payload.getField('uuid')" --spring.cloud.stream.bindings.input.destination=transform_geotuple --spring.cloud.stream.bindings.input.group=gemfire_rawjson --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-4. GemFire Source to retrieve top route count data from Geode
 
 ```
-docker run springcloudstream/gemfire-source-rabbit:1.0.2.RELEASE --gemfire.pool.host-addresses=192.168.11.111:10334 --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegRouteTopTen --spring.cloud.stream.bindings.output.destination=gemfire_topoute --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run springcloudstream/gemfire-source-rabbit:1.0.2.RELEASE --gemfire.pool.connect-type=server --gemfire.pool.host-addresses=192.168.11.104:40404 --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegRouteTopTen --spring.cloud.stream.bindings.output.destination=gemfire_topoute --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-5. WebSocket Sink to retrieve top route count data(1-2-4) and send to Stomp
 
 ```
-docker run -p 9400:8080 komushi/spring-cloud-stream-sink-stomp --stomp.topic=toproute --stomp.withsockjs=true --spring.cloud.stream.bindings.input.destination=gemfire_topoute --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run -p 9400:8080 komushi/spring-cloud-stream-sink-stomp --stomp.topic=toproute --stomp.withsockjs=true --spring.cloud.stream.bindings.input.destination=gemfire_topoute --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-6. WebSocket Sink to retrieve geocoded data(1-2-3) and send to Stomp
 
 ```
-docker run -p 9210:8080 komushi/spring-cloud-stream-sink-stomp-multi-topic --stomp.withsockjs=true --stomp.topic-path=/dropoffDistrictCode --spring.cloud.stream.bindings.input.destination=transform_geotuple --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run -p 9210:8080 komushi/spring-cloud-stream-sink-stomp-multi-topic --stomp.withsockjs=true --stomp.topic-path=/dropoffDistrictCode --spring.cloud.stream.bindings.input.destination=transform_geotuple --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-7. GemFire Source to retrieve dropoff district count data from Geode
 
 ```
-docker run springcloudstream/gemfire-source-rabbit:1.0.2.RELEASE --gemfire.pool.host-addresses=192.168.11.111:10334 --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegDropoffDistrictTop --spring.cloud.stream.bindings.output.destination=gemfire_topdropoff --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run springcloudstream/gemfire-source-rabbit:1.0.2.RELEASE --gemfire.pool.connect-type=server --gemfire.pool.host-addresses=192.168.11.104:40404 --gemfire.cacheEventExpression=newValue --gemfire.region.region-name=RegDropoffDistrictTop --spring.cloud.stream.bindings.output.destination=gemfire_topdropoff --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-8. WebSocket Sink to send dropoff district count data(1-2-7) to Stomp
 
 ```
-docker run -p 9410:8080 komushi/spring-cloud-stream-sink-stomp --logging.level.io.pivotal.spring.cloud.stream.sink=TRACE --stomp.topic=topdropoff --stomp.withsockjs=true --spring.cloud.stream.bindings.input.destination=gemfire_topdropoff --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.111 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run -p 9410:8080 komushi/spring-cloud-stream-sink-stomp --logging.level.io.pivotal.spring.cloud.stream.sink=TRACE --stomp.topic=topdropoff --stomp.withsockjs=true --spring.cloud.stream.bindings.input.destination=gemfire_topdropoff --spring.cloud.stream.bindings.input.group=1 --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 # 2. Visualization
