@@ -18,6 +18,8 @@ mongoimport --db geojson --collection blocks --type json --file "tokyo_23_brief_
 ## 1-3. Add geometry index in mongo shell
 
 ```
+use geojson
+
 db.blocks.createIndex({ geometry: "2dsphere" })
 ```
 
