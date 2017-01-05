@@ -20,6 +20,14 @@ mongoimport --db geojson --collection blocks --type json --file "tokyo_23_brief_
 ```
 use geojson
 
+db.createUser(
+    {
+      user: "root",
+      pwd: "keepitsimple",
+      roles: ["readWrite"]
+    }
+) 
+
 db.blocks.createIndex({ geometry: "2dsphere" })
 ```
 
