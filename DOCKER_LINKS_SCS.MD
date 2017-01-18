@@ -8,19 +8,13 @@
 ### 1-1-1. Start RabbitMQ
 
 ```
-rabbitmq-server
-```
-
-Or
-
-```
-brew services start rabbitmq
+$ docker run --name msg rabbitmq:3
 ```
 
 ### 1-1-2. Start Geode
 
 ```
-docker run -p 40404:40404 komushi/spring-boot-geode-server:1.0.0.APACHE-GEODE-INCUBATING-M2 --properties.useJmx=false
+docker run -p 40404:40404 --name geode komushi/spring-boot-geode-server:1.0.0.APACHE-GEODE-INCUBATING-M2 --properties.useJmx=false
 ```
 
 ## 1-1-3. Start MongoDB Server
@@ -31,13 +25,13 @@ docker run -p 40404:40404 komushi/spring-boot-geode-server:1.0.0.APACHE-GEODE-IN
 ### 1-2-1. HTTP Source to retrieve taxi raw event data
 
 ```
-docker run -p 9000:8080 springcloudstream/http-source-rabbit:1.0.2.RELEASE --spring.cloud.stream.bindings.output.destination=http_raw --spring.rabbitmq.host=192.168.0.73 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+$ docker run -p 9000:8080 --name http-source --link msg springcloudstream/http-source-rabbit:1.0.2.RELEASE --spring.cloud.stream.bindings.output.destination=http_raw --spring.rabbitmq.host=msg
 ```
 
 ### 1-2-2. Geocoding Processor to handle the data from HTTP Source(1-2-1)
 
 ```
-docker run komushi/spring-cloud-stream-processor-geocoding-reverse --properties.mongo.hostName=192.168.11.104 --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+$ docker run --name geocoding --link msg --link mongo komushi/spring-cloud-stream-processor-geocoding-reverse --properties.mongo.hostName=mongo --properties.mongo.database=geojson --properties.mongo.collection=blocks --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --spring.rabbitmq.host=msg
 ```
 
 ### 1-2-3. GemFire Sink to send geocoded data(1-2-2) to Geode
@@ -102,7 +96,7 @@ http://localhost:8080/#/tokyo23TopRoutes
 # 3. Sending data
 
 ```
-java -jar FlatFileReader-0.1.0-jar-with-dependencies.jar --file=./data/sample_data_tokyo_23.csv --url http://localhost:9000 --mode=bulk --interval=100
+$ java -jar FlatFileReader-0.1.0-jar-with-dependencies.jar --file=./data/sample_data_tokyo_23.csv --url http://localhost:9000 --mode=bulk --interval=100
 ```
 
 | Fields        | Descriptions | Sample Data |
