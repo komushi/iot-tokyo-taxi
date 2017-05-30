@@ -14,7 +14,7 @@ $ docker run --name msg rabbitmq:3
 ### 1-1-2. Start Geode
 
 ```
-docker run -p 40404:40404 --name geode komushi/spring-boot-geode-server:1.0.0.APACHE-GEODE-INCUBATING-M2 --properties.useJmx=false
+$ docker run -p 40404:40404 --name geode komushi/spring-boot-geode-server:1.0.0.APACHE-GEODE-INCUBATING-M2 --properties.useJmx=false
 ```
 
 ## 1-1-3. Start MongoDB Server
