@@ -31,7 +31,7 @@ java -jar http-source-rabbit-1.0.2.RELEASE.jar --spring.cloud.stream.bindings.ou
 ### 1-2-2. Geocoding Processor to handle the data from HTTP Source(1-2-1)
 
 ```
-java -jar spring-cloud-stream-processor-geocoding-reverse-0.0.1-SNAPSHOT.jar --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --properties.mongo.database=geojson --properties.mongo.collection=blocks --server.port=9100
+java -jar spring-cloud-stream-processor-geocoding-reverse-0.2.0-SNAPSHOT.jar --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --properties.mongo.database=geojson --properties.mongo.collection=blocks --server.port=9100
 ```
 
 ### 1-2-3. GemFire Sink to send geocoded data(1-2-2) to Geode

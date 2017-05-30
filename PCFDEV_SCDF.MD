@@ -65,7 +65,7 @@ cf start dataflow-server
 | http-source-rabbit | Source | http://192.168.22.1/http-source-rabbit-1.0.2.RELEASE.jar |
 | gemfire-source-rabbit | Source | http://192.168.22.1/gemfire-source-rabbit-1.0.2.RELEASE.jar |
 | gemfire-sink-rabbit | Sink | http://192.168.22.1/gemfire-sink-rabbit-1.0.2.RELEASE.jar |
-| geocoding-processor-rabbit | Processor | http://192.168.22.1/spring-cloud-stream-processor-geocoding-reverse-0.0.1-SNAPSHOT.jar |
+| geocoding-processor-rabbit | Processor | http://192.168.22.1/spring-cloud-stream-processor-geocoding-reverse-0.2.0-SNAPSHOT.jar |
 | stomp-sink-rabbit | Sink | http://192.168.22.1/spring-cloud-stream-sink-stomp-0.0.1-SNAPSHOT.jar |
 | multi-topic-stomp-sink-rabbit | Sink | http://192.168.22.1/spring-cloud-stream-sink-stomp-multi-topic-0.0.1-SNAPSHOT.jar |
 
@@ -78,7 +78,7 @@ app register --name gemfire-sink-rabbit --type sink --uri 'http://192.168.22.1/g
 
 app register --name gemfire-source-rabbit --type source --uri 'http://192.168.22.1/gemfire-source-rabbit-1.0.2.RELEASE.jar'
 
-app register --name geocoding-processor-rabbit --type processor --uri 'http://192.168.22.1/spring-cloud-stream-processor-geocoding-reverse-0.0.1-SNAPSHOT.jar'
+app register --name geocoding-processor-rabbit --type processor --uri 'http://192.168.22.1/spring-cloud-stream-processor-geocoding-reverse-0.2.0-SNAPSHOT.jar'
 
 app register --name stomp-sink-rabbit --type sink --uri 'http://192.168.22.1/spring-cloud-stream-sink-stomp-0.0.1-SNAPSHOT.jar'
 

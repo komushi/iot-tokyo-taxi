@@ -62,7 +62,7 @@ http://localhost:9393/dashboard
 | http-source-rabbit | Source | file:///Library/WebServer/Documents/http-source-rabbit-1.0.2.RELEASE.jar |
 | gemfire-source-rabbit | Source | file:///Library/WebServer/Documents/gemfire-source-rabbit-1.0.2.RELEASE.jar |
 | gemfire-sink-rabbit | Sink | file:///Library/WebServer/Documents/gemfire-sink-rabbit-1.0.2.RELEASE.jar |
-| geocoding-processor-rabbit | Processor | file:///Library/WebServer/Documents/spring-cloud-stream-processor-geocoding-reverse-0.0.1-SNAPSHOT.jar |
+| geocoding-processor-rabbit | Processor | file:///Library/WebServer/Documents/spring-cloud-stream-processor-geocoding-reverse-0.2.0-SNAPSHOT.jar |
 | stomp-sink-rabbit | Sink | file:///Library/WebServer/Documents/spring-cloud-stream-sink-stomp-0.0.1-SNAPSHOT.jar |
 | multi-topic-stomp-sink-rabbit | Sink | file:///Library/WebServer/Documents/spring-cloud-stream-sink-stomp-multi-topic-0.0.1-SNAPSHOT.jar |
 
@@ -75,7 +75,7 @@ app register --name gemfire-sink-rabbit --type sink --uri 'file:///Library/WebSe
 
 app register --name gemfire-source-rabbit --type source --uri 'file:///Library/WebServer/Documents/gemfire-source-rabbit-1.0.2.RELEASE.jar'
 
-app register --name geocoding-processor-rabbit --type processor --uri 'file:///Library/WebServer/Documents/spring-cloud-stream-processor-geocoding-reverse-0.0.1-SNAPSHOT.jar'
+app register --name geocoding-processor-rabbit --type processor --uri 'file:///Library/WebServer/Documents/spring-cloud-stream-processor-geocoding-reverse-0.2.0-SNAPSHOT.jar'
 
 app register --name stomp-sink-rabbit --type sink --uri 'file:///Library/WebServer/Documents/spring-cloud-stream-sink-stomp-0.0.1-SNAPSHOT.jar'
 
