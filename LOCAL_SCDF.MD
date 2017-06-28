@@ -93,7 +93,7 @@ app register --name multi-topic-stomp-sink-rabbit --type sink --uri 'file:///Lib
 ### 1-3-1. Create on dashboard
 
 ```
-http2multi-stomp=http-source-rabbit --port=9000 | geocoding-processor-rabbit --database=geojson --collection=blocks | multi-topic-stomp-sink-rabbit --withsockjs=true --topic-path=/dropoffDistrictCode --port=9210
+http2multi-stomp=http-source-rabbit --port=9000 | geocoding-processor-rabbit --database=geojson --collection=blocks --user=root --password=keepitsimple | multi-topic-stomp-sink-rabbit --withsockjs=true --topic-path=/dropoffDistrictCode --port=9210
 
 http2gem=:http2multi-stomp.geocoding-processor-rabbit > gemfire-sink-rabbit --json=true --key-expression=payload.getField('uuid') --region-name=RegRaw
 
@@ -105,7 +105,7 @@ gem2stomp_top_route=gemfire-source-rabbit --cache-event-expression=newValue --re
 ### 1-3-2. Create on shell
 
 ```
-stream create --name http2multi-stomp --definition "http-source-rabbit --port=9000 | geocoding-processor-rabbit --database=geojson --collection=blocks | multi-topic-stomp-sink-rabbit --withsockjs=true --topic-path=/dropoffDistrictCode --port=9210" --deploy
+stream create --name http2multi-stomp --definition "http-source-rabbit --port=9000 | geocoding-processor-rabbit --database=geojson --collection=blocks --user=root --password=keepitsimple | multi-topic-stomp-sink-rabbit --withsockjs=true --topic-path=/dropoffDistrictCode --port=9210" --deploy
 
 stream create --name http2gem --definition ":http2multi-stomp.geocoding-processor-rabbit > gemfire-sink-rabbit --json=true --key-expression=payload.getField('uuid') --region-name=RegRaw" --deploy
 

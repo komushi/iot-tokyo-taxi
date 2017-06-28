@@ -23,5 +23,5 @@ services:
     links:
       - "rabbitmq:msg"
       - "mongo"
-    command: "--properties.mongo.hostName=mongo --properties.mongo.database=geojson --properties.mongo.collection=blocks --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --spring.rabbitmq.host=msg"
+    command: "--properties.mongo.hostName=mongo --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --spring.rabbitmq.host=msg"
     mem_limit: 1000000000

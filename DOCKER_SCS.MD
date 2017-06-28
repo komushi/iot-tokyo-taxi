@@ -37,7 +37,7 @@ docker run -p 9000:8080 springcloudstream/http-source-rabbit:1.0.2.RELEASE --spr
 ### 1-2-2. Geocoding Processor to handle the data from HTTP Source(1-2-1)
 
 ```
-docker run komushi/spring-cloud-stream-processor-geocoding-reverse --properties.mongo.hostName=192.168.11.104 --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
+docker run komushi/spring-cloud-stream-processor-geocoding-reverse --properties.mongo.hostName=192.168.11.104 --properties.mongo.port=27017 --properties.mongo.database=geojson --properties.mongo.collection=blocks --properties.mongo.user=root --properties.mongo.password=keepitsimple --spring.cloud.stream.bindings.input.destination=http_raw --spring.cloud.stream.bindings.input.group=transform_geotuple --spring.cloud.stream.bindings.output.contentType=application/json --spring.cloud.stream.bindings.output.destination=transform_geotuple --spring.rabbitmq.host=192.168.11.104 --spring.rabbitmq.port=5672 --spring.rabbitmq.username=test --spring.rabbitmq.password=test
 ```
 
 ### 1-2-3. GemFire Sink to send geocoded data(1-2-2) to Geode
