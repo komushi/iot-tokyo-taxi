@@ -1,0 +1,69 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create ElasticLoadBalancingV2 Resources
+Parameters:
+  VpcId:
+    Description: Name of VPC
+    Type: AWS::EC2::VPC::Id
+  PublicSubnets:
+    Description: Choose which PublicSubnets the Applicaion Load Balancer should be deployed to
+    Type: List<AWS::EC2::Subnet::Id>
+  # SecurityGroup:
+  #   Description: Select the Security Group to apply to the Applicaion Load Balancer
+  #   Type: AWS::EC2::SecurityGroup::Id
+Resources:
+  TargetGroupMongo:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: tg-mongo
+      TargetType: instance
+      VpcId: !Ref VpcId
+      Port: 27017
+      Protocol: TCP
+  TargetGroupGeode:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: tg-geode
+      TargetType: instance
+      VpcId: !Ref VpcId
+      Port: 40404
+      Protocol: TCP
+  ListenerGeode:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroupGeode
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 40404
+      Protocol: TCP
+  ListenerMongo:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroupMongo
+      LoadBalancerArn: !Ref NetworkLoadBalancer
+      Port: 27017
+      Protocol: TCP
+  NetworkLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: nlb-scs
+      Type: network
+      Scheme: internet-facing
+      Subnets: !Ref PublicSubnets
+      # SecurityGroups: 
+      #   - !Ref SecurityGroup
+Outputs:
+  ApplicationLoadBalancerDNS: 
+    Description: A reference to the DNS of the NetworkLoadBalancer
+    Value: !GetAtt NetworkLoadBalancer.DNSName
+  TargetGroupMongoArn: 
+    Description: The ARN of the Mongo Target Group
+    Value: !Ref TargetGroupMongo
+  TargetGroupGeodeArn: 
+    Description: The ARN of the Geode Target Group
+    Value: !Ref TargetGroupGeode
+
+

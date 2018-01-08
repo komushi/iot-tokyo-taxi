@@ -1,0 +1,69 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to create IAM Settings.
+
+Resources:
+  ScsTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        # - "arn:aws:iam::aws:policy/AutoScalingFullAccess"
+        # - "arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess"
+
+  EcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "sts:AssumeRole"
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+
+  # EcsServiceRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: Allow
+  #           Action: "sts:AssumeRole"
+  #           Principal:
+  #             Service: ecs.amazonaws.com
+  #     ManagedPolicyArns:
+  #       - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceRole"
+
+Outputs:
+  ScsTaskRoleArn:
+    Description: ARN of SCS Task Execution Role
+    Value:
+      Fn::GetAtt:
+        - ScsTaskRole
+        - Arn
+
+  EcsTaskExecutionRoleArn:
+    Description: ARN of ECS Task Execution Role
+    Value:
+      Fn::GetAtt:
+        - EcsTaskExecutionRole
+        - Arn
+
+  # EcsServiceRoleArn:
+  #   Description: ARN of ECS Service Role
+  #   Value:
+  #     Fn::GetAtt:
+  #       - EcsServiceRole
+  #       - Arn

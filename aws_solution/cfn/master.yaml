@@ -1,0 +1,48 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Main Template For Spring Cloud Stream IoT Demo
+
+Parameters:
+  VpcId:
+    Description: ID of VPC
+    Type: AWS::EC2::VPC::Id
+  PublicSubnets:
+    Description: Choose which subnets the Network Load Balancer should be deployed to
+    Type: List<AWS::EC2::Subnet::Id>
+  # SecurityGroup:
+  #   Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  IamStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/iam.yaml
+
+  TaskDefStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/task-def.yaml
+      Parameters:
+        EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
+        ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
+
+  NlbStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/nlb.yaml
+      Parameters:
+        VpcId: !Ref VpcId
+        PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
+        # SecurityGroup: !Ref SecurityGroup
+
+  EcsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/ecs.yaml
+      Parameters:
+        TaskDefMongoArn: !GetAtt TaskDefStack.Outputs.DefMongoArn
+        TaskDefGeodeArn: !GetAtt TaskDefStack.Outputs.DefGeodeArn
+        TargetGroupMongoArn: !GetAtt NlbStack.Outputs.TargetGroupMongoArn
+        TargetGroupGeodeArn: !GetAtt NlbStack.Outputs.TargetGroupGeodeArn
+        EcsClusterArn: "arn:aws:ecs:ap-northeast-1:042083552617:cluster/ec2-scs"
+
