@@ -33,6 +33,7 @@ Resources:
       Parameters:
         VpcId: !Ref VpcId
         PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
+        StackName: !Ref AWS::StackName
         # SecurityGroup: !Ref SecurityGroup
 
   EcsStack:

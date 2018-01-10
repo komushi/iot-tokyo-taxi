@@ -2,6 +2,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Create ElasticLoadBalancingV2 Resources
 Parameters:
+  StackName:
+    Type: String
   VpcId:
     Description: Name of VPC
     Type: AWS::EC2::VPC::Id
@@ -15,7 +17,7 @@ Resources:
   TargetGroupMongo:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: tg-mongo
+      Name: !Sub tg-mongo-${StackName}
       TargetType: instance
       VpcId: !Ref VpcId
       Port: 27017
@@ -23,7 +25,7 @@ Resources:
   TargetGroupGeode:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: tg-geode
+      Name: !Sub tg-geode-${StackName}
       TargetType: instance
       VpcId: !Ref VpcId
       Port: 40404
@@ -49,7 +51,7 @@ Resources:
   NetworkLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: nlb-scs
+      Name: !Sub nlb-${StackName}
       Type: network
       Scheme: internet-facing
       Subnets: !Ref PublicSubnets
