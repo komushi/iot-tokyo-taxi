@@ -58,7 +58,7 @@ Resources:
       # SecurityGroups: 
       #   - !Ref SecurityGroup
 Outputs:
-  ApplicationLoadBalancerDNS: 
+  LoadBalancerDns: 
     Description: A reference to the DNS of the NetworkLoadBalancer
     Value: !GetAtt NetworkLoadBalancer.DNSName
   TargetGroupMongoArn: 

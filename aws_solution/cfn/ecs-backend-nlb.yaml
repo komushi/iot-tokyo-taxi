@@ -5,10 +5,6 @@ Description: Stack to Create ECS Task Definition
 Parameters:
   EcsClusterArn:
     Type: String
-  # EcsServiceRoleArn:
-  #   Type: String
-  # LoadBalancerName:
-  #   Type: String
   TargetGroupMongoArn:
     Type: String
   TargetGroupGeodeArn:
@@ -17,7 +13,6 @@ Parameters:
     Type: String
   TaskDefGeodeArn:
     Type: String
-
 
 Resources:
   MongoService:
@@ -33,8 +28,6 @@ Resources:
           Ref: TargetGroupMongoArn
         ContainerPort: 27017
         ContainerName: mongo-geojson
-        # LoadBalancerName: 
-        #   Ref: LoadBalancerName
 
   GeodeService:
     Type: AWS::ECS::Service
@@ -49,5 +42,3 @@ Resources:
           Ref: TargetGroupGeodeArn
         ContainerPort: 40404
         ContainerName: spring-boot-geode-server
-        # LoadBalancerName: 
-        #   Ref: LoadBalancerName

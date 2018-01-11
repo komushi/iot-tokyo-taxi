@@ -1,0 +1,320 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create ECS Task Definition
+
+Parameters:
+  StackName:
+    Type: String
+  EcsTaskExecutionRoleArn:
+    Type: String
+  ScsTaskRoleArn:
+    Type: String
+  MongoDns:
+    Type: String
+  GeodeDns:
+    Type: String
+
+Resources:
+  LogGroupSourceHttp:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-source-http-${StackName}
+
+  DefSourceHttp9000: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-source-http-9000-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-source-http"
+          Image: "komushi/scs-source-http"
+          Command: 
+            - "--server.port=9000"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.default.contentType=text/plain"
+            - "--spring.cloud.stream.bindings.output.destination=http_raw"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 9000
+              HostPort: 9000
+              Protocol: "http"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSourceHttp
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupProcessorGeocoding:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-processor-geocoding-reverse-${StackName}
+
+  DefProcessorGeocoding: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-processor-geocoding-reverse-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-processor-geocoding-reverse"
+          Image: "komushi/scs-processor-geocoding-reverse"
+          Command: 
+            - "--server.port=9100"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.bindings.input.destination=http_raw"
+            - "--spring.cloud.stream.bindings.input.group=geocoding"
+            - "--spring.cloud.stream.bindings.input.contentType=text/plain"
+            - "--spring.cloud.stream.bindings.output.destination=transform_geotuple"
+            - "--spring.cloud.stream.bindings.output.contentType=application/json"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - "--logging.level.info.cloudnative=TRACE"
+            - "--properties.mongo.port=27017"
+            - "--properties.mongo.database=geojson"
+            - "--properties.mongo.collection=blocks"
+            - "--properties.mongo.user=root"
+            - "--properties.mongo.password=keepitsimple"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+            - !Join
+              - ""
+              - - "--properties.mongo.hostName="
+                - !Ref MongoDns
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupProcessorGeocoding
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSinkStomp9210:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-sink-stomp-9210-${StackName}
+
+  DefSinkStomp9210: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-sink-stomp-9210-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-sink-stomp-multitopic"
+          Image: "komushi/scs-sink-stomp-multitopic"
+          Command: 
+            - "--server.port=9210"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.bindings.input.destination=transform_geotuple"
+            - "--spring.cloud.stream.bindings.input.group=multitopic"
+            - "--stomp.withsockjs=true"
+            - "--stomp.topicPath=/dropoffDistrictCode"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 9210
+              HostPort: 9210
+              Protocol: "http"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSinkStomp9210
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSinkGemfire:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-sink-gemfire-${StackName}
+
+  DefSinkGemfire: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-sink-gemfire-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-sink-gemfire"
+          Image: "komushi/scs-sink-gemfire"
+          Command: 
+            - "--server.port=9200"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.bindings.input.destination=transform_geotuple"
+            - "--spring.cloud.stream.bindings.input.group=gemfire"
+            - "--spring.cloud.stream.bindings.input.contentType=application/json"
+            - "--gemfire.pool.connect-type=server"
+            - "--gemfire.pool.region-names=RegRaw"
+            - "--gemfire.json=true"
+            - "--gemfire.key-expression=payload.getField('uuid')"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+            - !Join
+              - ""
+              - - "--gemfire.pool.host-addresses="
+                - !Ref GeodeDns
+                - ":"
+                - "40404"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSinkGemfire
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSourceGemfireDistrict:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-source-gemfire-district-${StackName}
+
+  DefSourceGemfireDistrict:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-source-gemfire-district-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-source-gemfire"
+          Image: "komushi/scs-source-gemfire"
+          Command: 
+            - "--server.port=9310"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.bindings.output.destination=gemfire_topdropoff"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - "--gemfire.pool.connect-type=server"
+            - "--gemfire.cacheEventExpression=newValue"
+            - "--gemfire.region.region-name=RegDropoffDistrictTop"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+            - !Join
+              - ""
+              - - "--gemfire.pool.host-addresses="
+                - !Ref GeodeDns
+                - ":"
+                - "40404"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSourceGemfireDistrict
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSourceGemfireRoute:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-source-gemfire-route-${StackName}
+
+  DefSourceGemfireRoute:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-source-gemfire-route-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-source-gemfire"
+          Image: "komushi/scs-source-gemfire"
+          Command: 
+            - "--server.port=9300"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.bindings.output.destination=gemfire_topoute"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - "--gemfire.pool.connect-type=server"
+            - "--gemfire.cacheEventExpression=newValue"
+            - "--gemfire.region.region-name=RegRouteTopTen"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+            - !Join
+              - ""
+              - - "--gemfire.pool.host-addresses="
+                - !Ref GeodeDns
+                - ":"
+                - "40404"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSourceGemfireRoute
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+Outputs:
+  DefSourceHttp9000Arn:
+    Value:
+      Ref: DefSourceHttp9000
+  DefProcessorGeocodingArn:
+    Value:
+      Ref: DefProcessorGeocoding
+  DefSinkStomp9210Arn:
+    Value:
+      Ref: DefSinkStomp9210
+  DefSinkGemfireArn:
+    Value:
+      Ref: DefSinkGemfire
+  DefSourceGemfireDistrictArn:
+    Value:
+      Ref: DefSourceGemfireDistrict
+  DefSourceGemfireRouteArn:
+    Value:
+      Ref: DefSourceGemfireRoute

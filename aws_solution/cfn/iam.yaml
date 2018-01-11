@@ -17,8 +17,8 @@ Resources:
         - "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
         - "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
         - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
-        # - "arn:aws:iam::aws:policy/AutoScalingFullAccess"
-        # - "arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess"
+        - "arn:aws:iam::aws:policy/AutoScalingFullAccess"
+        - "arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess"
 
   EcsTaskExecutionRole:
     Type: AWS::IAM::Role

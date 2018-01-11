@@ -9,8 +9,8 @@ Parameters:
   PublicSubnets:
     Description: Choose which subnets the Network Load Balancer should be deployed to
     Type: List<AWS::EC2::Subnet::Id>
-  # SecurityGroup:
-  #   Type: AWS::EC2::SecurityGroup::Id
+  EcsClusterName:
+    Type: String
 
 Resources:
   IamStack:
@@ -18,32 +18,116 @@ Resources:
     Properties:
       TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/iam.yaml
 
-  TaskDefStack:
+  TaskDefBackendStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/task-def.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/task-def-backend.yaml
       Parameters:
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
         ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
+        StackName: !Ref AWS::StackName
 
-  NlbStack:
+#temporary use CLB and ALB before NLB
+  ClbStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/nlb.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/clb.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
+
+  EcsBackendStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/ecs-backend-clb.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        TaskDefMongoArn: !GetAtt TaskDefBackendStack.Outputs.DefMongoArn
+        TaskDefGeodeArn: !GetAtt TaskDefBackendStack.Outputs.DefGeodeArn
+        LoadBalancerGeodeName: !GetAtt ClbStack.Outputs.LoadBalancerGeodeName
+        LoadBalancerMongoName: !GetAtt ClbStack.Outputs.LoadBalancerMongoName
+        # EcsClusterArn: "arn:aws:ecs:ap-northeast-1:042083552617:cluster/ec2-scs"
+        EcsClusterArn: 
+          !Join
+          - ":"
+          - - "arn"
+            - "aws"
+            - "ecs"
+            - !Ref "AWS::Region"
+            - !Ref "AWS::AccountId"
+            - !Sub cluster/${EcsClusterName}
+
+  TaskDefBackendStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/task-def-backend.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
+        ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
+
+  AlbStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/alb.yaml
       Parameters:
         VpcId: !Ref VpcId
         PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
         StackName: !Ref AWS::StackName
-        # SecurityGroup: !Ref SecurityGroup
 
-  EcsStack:
+  TaskDefScsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/ecs.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/task-def-scs.yaml
       Parameters:
-        TaskDefMongoArn: !GetAtt TaskDefStack.Outputs.DefMongoArn
-        TaskDefGeodeArn: !GetAtt TaskDefStack.Outputs.DefGeodeArn
-        TargetGroupMongoArn: !GetAtt NlbStack.Outputs.TargetGroupMongoArn
-        TargetGroupGeodeArn: !GetAtt NlbStack.Outputs.TargetGroupGeodeArn
-        EcsClusterArn: "arn:aws:ecs:ap-northeast-1:042083552617:cluster/ec2-scs"
+        StackName: !Ref AWS::StackName
+        EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
+        ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
+        MongoDns: !GetAtt ClbStack.Outputs.LoadBalancerMongoDns
+        GeodeDns: !GetAtt ClbStack.Outputs.LoadBalancerGeodeDns
+
+  EcsScsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/ecs-scs-alb.yaml
+      Parameters:
+        StackName: !Ref AWS::StackName
+        TaskDefSourceHttp9000Arn: !GetAtt TaskDefScsStack.Outputs.DefSourceHttp9000Arn
+        TaskDefProcessorGeocodingArn: !GetAtt TaskDefScsStack.Outputs.DefProcessorGeocodingArn
+        TaskDefSinkStomp9210Arn: !GetAtt TaskDefScsStack.Outputs.DefSinkStomp9210Arn
+        TaskDefSinkGemfireArn: !GetAtt TaskDefScsStack.Outputs.DefSinkGemfireArn
+        TaskDefSourceGemfireDistrictArn: !GetAtt TaskDefScsStack.Outputs.DefSourceGemfireDistrictArn
+        TaskDefSourceGemfireRouteArn: !GetAtt TaskDefScsStack.Outputs.DefSourceGemfireRouteArn
+        TargetGroupSourceHttp9000Arn: !GetAtt AlbStack.Outputs.TargetGroupSourceHttp9000Arn
+        TargetGroupSinkStomp9210Arn: !GetAtt AlbStack.Outputs.TargetGroupSinkStomp9210Arn
+        EcsClusterArn: 
+          !Join
+          - ":"
+          - - "arn"
+            - "aws"
+            - "ecs"
+            - !Ref "AWS::Region"
+            - !Ref "AWS::AccountId"
+            - !Sub cluster/${EcsClusterName}
+
+# waiting for the NLB cross region feature
+  # NlbStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/nlb.yaml
+  #     Parameters:
+  #       VpcId: !Ref VpcId
+  #       PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
+  #       StackName: !Ref AWS::StackName
+
+  # EcsStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/ecs-backend-nlb.yaml
+  #     Parameters:
+  #       TaskDefMongoArn: !GetAtt TaskDefBackendStack.Outputs.DefMongoArn
+  #       TaskDefGeodeArn: !GetAtt TaskDefBackendStack.Outputs.DefGeodeArn
+  #       TargetGroupMongoArn: !GetAtt NlbStack.Outputs.TargetGroupMongoArn
+  #       TargetGroupGeodeArn: !GetAtt NlbStack.Outputs.TargetGroupGeodeArn
+  #       EcsClusterArn: "arn:aws:ecs:ap-northeast-1:042083552617:cluster/ec2-scs"
 
