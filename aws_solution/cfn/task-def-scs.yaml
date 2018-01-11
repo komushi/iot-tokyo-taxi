@@ -26,7 +26,7 @@ Resources:
       Family: !Sub def-source-http-9000-${StackName}
       RequiresCompatibilities:
         - "EC2"
-      Cpu: "512"
+      # Cpu: "512"
       ExecutionRoleArn:
         Ref: EcsTaskExecutionRoleArn
       Memory: "1024"
@@ -70,7 +70,7 @@ Resources:
       Family: !Sub def-processor-geocoding-reverse-${StackName}
       RequiresCompatibilities:
         - "EC2"
-      Cpu: "512"
+      # Cpu: "512"
       ExecutionRoleArn:
         Ref: EcsTaskExecutionRoleArn
       Memory: "1024"
@@ -122,7 +122,7 @@ Resources:
       Family: !Sub def-sink-stomp-9210-${StackName}
       RequiresCompatibilities:
         - "EC2"
-      Cpu: "512"
+      # Cpu: "512"
       ExecutionRoleArn:
         Ref: EcsTaskExecutionRoleArn
       Memory: "1024"
@@ -136,9 +136,10 @@ Resources:
             - "--server.port=9210"
             - "--spring.cloud.stream.defaultBinder=kinesis"
             - "--spring.cloud.stream.bindings.input.destination=transform_geotuple"
-            - "--spring.cloud.stream.bindings.input.group=multitopic"
+            - "--spring.cloud.stream.bindings.input.group=stomp"
             - "--stomp.withsockjs=true"
             - "--stomp.topicPath=/dropoffDistrictCode"
+            - "--logging.level.info.cloudnative=TRACE"
             - !Join
               - ""
               - - "--cloud.aws.region.static="
@@ -167,7 +168,7 @@ Resources:
       Family: !Sub def-sink-gemfire-${StackName}
       RequiresCompatibilities:
         - "EC2"
-      Cpu: "1024"
+      # Cpu: "1024"
       ExecutionRoleArn:
         Ref: EcsTaskExecutionRoleArn
       Memory: "2048"
@@ -216,7 +217,7 @@ Resources:
       Family: !Sub def-source-gemfire-district-${StackName}
       RequiresCompatibilities:
         - "EC2"
-      Cpu: "1024"
+      # Cpu: "1024"
       ExecutionRoleArn:
         Ref: EcsTaskExecutionRoleArn
       Memory: "2048"
@@ -263,7 +264,7 @@ Resources:
       Family: !Sub def-source-gemfire-route-${StackName}
       RequiresCompatibilities:
         - "EC2"
-      Cpu: "1024"
+      # Cpu: "1024"
       ExecutionRoleArn:
         Ref: EcsTaskExecutionRoleArn
       Memory: "2048"
@@ -299,6 +300,98 @@ Resources:
               awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: "ecs"
 
+  LogGroupSinkStomp9400:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-sink-stomp-9400-${StackName}
+
+  DefSinkStomp9400: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-sink-stomp-9400-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-sink-stomp"
+          Image: "komushi/scs-sink-stomp"
+          Command: 
+            - "--server.port=9400"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.bindings.input.destination=gemfire_topoute"
+            - "--spring.cloud.stream.bindings.input.group=stomp"
+            - "--stomp.withsockjs=true"
+            - "--stomp.topic=toproute"
+            - "--logging.level.info.cloudnative=TRACE"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 9400
+              HostPort: 9400
+              Protocol: "http"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSinkStomp9400
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSinkStomp9410:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-sink-stomp-9410-${StackName}
+
+  DefSinkStomp9410: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-sink-stomp-9410-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-sink-stomp"
+          Image: "komushi/scs-sink-stomp"
+          Command: 
+            - "--server.port=9410"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.bindings.input.destination=gemfire_topdropoff"
+            - "--spring.cloud.stream.bindings.input.group=stomp"
+            - "--stomp.withsockjs=true"
+            - "--stomp.topic=topdropoff"
+            - "--logging.level.info.cloudnative=TRACE"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 9410
+              HostPort: 9410
+              Protocol: "http"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSinkStomp9410
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
 Outputs:
   DefSourceHttp9000Arn:
     Value:
@@ -318,3 +411,9 @@ Outputs:
   DefSourceGemfireRouteArn:
     Value:
       Ref: DefSourceGemfireRoute
+  DefSinkStomp9400Arn:
+    Value:
+      Ref: DefSinkStomp9400
+  DefSinkStomp9410Arn:
+    Value:
+      Ref: DefSinkStomp9410

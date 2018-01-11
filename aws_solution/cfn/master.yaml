@@ -98,8 +98,12 @@ Resources:
         TaskDefSinkGemfireArn: !GetAtt TaskDefScsStack.Outputs.DefSinkGemfireArn
         TaskDefSourceGemfireDistrictArn: !GetAtt TaskDefScsStack.Outputs.DefSourceGemfireDistrictArn
         TaskDefSourceGemfireRouteArn: !GetAtt TaskDefScsStack.Outputs.DefSourceGemfireRouteArn
+        TaskDefSinkStomp9400Arn: !GetAtt TaskDefScsStack.Outputs.DefSinkStomp9400Arn
+        TaskDefSinkStomp9410Arn: !GetAtt TaskDefScsStack.Outputs.DefSinkStomp9410Arn        
         TargetGroupSourceHttp9000Arn: !GetAtt AlbStack.Outputs.TargetGroupSourceHttp9000Arn
         TargetGroupSinkStomp9210Arn: !GetAtt AlbStack.Outputs.TargetGroupSinkStomp9210Arn
+        TargetGroupSinkStomp9400Arn: !GetAtt AlbStack.Outputs.TargetGroupSinkStomp9400Arn
+        TargetGroupSinkStomp9410Arn: !GetAtt AlbStack.Outputs.TargetGroupSinkStomp9410Arn
         EcsClusterArn: 
           !Join
           - ":"

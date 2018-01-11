@@ -22,7 +22,7 @@ Resources:
       Family: !Sub def-geode-${StackName}
       RequiresCompatibilities:
         - "EC2"
-      Cpu: "1024"
+      # Cpu: "1024"
       ExecutionRoleArn:
         Ref: EcsTaskExecutionRoleArn
       Memory: "2048"
@@ -56,7 +56,7 @@ Resources:
       Family: !Sub def-mongo-geojson-${StackName}
       RequiresCompatibilities:
         - "EC2"
-      Cpu: "1024"
+      # Cpu: "1024"
       ExecutionRoleArn:
         Ref: EcsTaskExecutionRoleArn
       Memory: "2048"

@@ -19,9 +19,17 @@ Parameters:
     Type: String
   TaskDefSourceGemfireRouteArn:
     Type: String    
+  TaskDefSinkStomp9400Arn:
+    Type: String
+  TaskDefSinkStomp9410Arn:
+    Type: String
   TargetGroupSourceHttp9000Arn:
     Type: String
   TargetGroupSinkStomp9210Arn:
+    Type: String
+  TargetGroupSinkStomp9400Arn:
+    Type: String
+  TargetGroupSinkStomp9410Arn:
     Type: String
 
 Resources:
@@ -74,3 +82,53 @@ Resources:
       TaskDefinition:
         Ref: TaskDefSinkGemfireArn
       DesiredCount: 1
+
+  ScsSourceGemfireDistrict:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub scs-sink-gemfire-district-${StackName}
+      Cluster:
+        Ref: EcsClusterArn
+      TaskDefinition:
+        Ref: TaskDefSourceGemfireDistrictArn
+      DesiredCount: 1
+
+  ScsSourceGemfireRoute:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub scs-sink-gemfire-route-${StackName}
+      Cluster:
+        Ref: EcsClusterArn
+      TaskDefinition:
+        Ref: TaskDefSourceGemfireRouteArn
+      DesiredCount: 1
+
+  ScsSinkStomp9400:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub scs-sink-stomp-9400-${StackName}
+      Cluster:
+        Ref: EcsClusterArn
+      TaskDefinition:
+        Ref: TaskDefSinkStomp9400Arn
+      DesiredCount: 1
+      LoadBalancers:
+      - TargetGroupArn:
+          Ref: TargetGroupSinkStomp9400Arn
+        ContainerPort: 9400
+        ContainerName: scs-sink-stomp
+
+  ScsSinkStomp9410:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub scs-sink-stomp-9410-${StackName}
+      Cluster:
+        Ref: EcsClusterArn
+      TaskDefinition:
+        Ref: TaskDefSinkStomp9410Arn
+      DesiredCount: 1
+      LoadBalancers:
+      - TargetGroupArn:
+          Ref: TargetGroupSinkStomp9410Arn
+        ContainerPort: 9410
+        ContainerName: scs-sink-stomp

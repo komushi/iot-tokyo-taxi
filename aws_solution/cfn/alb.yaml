@@ -114,4 +114,7 @@ Outputs:
     Value: !Ref TargetGroupSourceHttp9000
   TargetGroupSinkStomp9210Arn:
     Value: !Ref TargetGroupSinkStomp9210
-
+  TargetGroupSinkStomp9400Arn:
+    Value: !Ref TargetGroupSinkStomp9400
+  TargetGroupSinkStomp9410Arn:
+    Value: !Ref TargetGroupSinkStomp9410
