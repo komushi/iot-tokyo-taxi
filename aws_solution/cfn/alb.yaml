@@ -110,6 +110,9 @@ Outputs:
   LoadBalancerDns: 
     Description: A reference to the DNS of the LoadBalancer
     Value: !GetAtt LoadBalancer.DNSName
+  CanonicalHostedZoneID: 
+    Description: A reference to the CanonicalHostedZoneID of the LoadBalancer
+    Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
   TargetGroupSourceHttp9000Arn:
     Value: !Ref TargetGroupSourceHttp9000
   TargetGroupSinkStomp9210Arn:

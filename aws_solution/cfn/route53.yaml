@@ -1,0 +1,22 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create Route53 RecordSet
+
+Parameters:
+  HostedZoneName:
+    Type: String
+  LoadBalancerDns:
+    Type: String
+  CanonicalHostedZoneID:
+    Type: String
+
+Resources:
+  ScsRecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !Sub "scs.${HostedZoneName}"
+      HostedZoneName: !Ref HostedZoneName
+      Type: A
+      AliasTarget: 
+        DNSName: !Ref LoadBalancerDns
+        HostedZoneId: !Ref CanonicalHostedZoneID

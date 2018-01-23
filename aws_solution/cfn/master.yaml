@@ -11,6 +11,9 @@ Parameters:
     Type: List<AWS::EC2::Subnet::Id>
   EcsClusterName:
     Type: String
+  HostedZoneName:
+    Type: String
+    Default: cloudnative.site.
 
 Resources:
   IamStack:
@@ -113,6 +116,15 @@ Resources:
             - !Ref "AWS::Region"
             - !Ref "AWS::AccountId"
             - !Sub cluster/${EcsClusterName}
+
+  Route53Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/route53.yaml
+      Parameters:
+        HostedZoneName: !Ref HostedZoneName
+        LoadBalancerDns: !GetAtt AlbStack.Outputs.LoadBalancerDns
+        CanonicalHostedZoneID: !GetAtt AlbStack.Outputs.CanonicalHostedZoneID
 
 # waiting for the NLB cross region feature
   # NlbStack:
