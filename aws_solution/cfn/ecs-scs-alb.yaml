@@ -86,7 +86,7 @@ Resources:
   ScsSourceGemfireDistrict:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub scs-sink-gemfire-district-${StackName}
+      ServiceName: !Sub scs-source-gemfire-district-${StackName}
       Cluster:
         Ref: EcsClusterArn
       TaskDefinition:
@@ -96,7 +96,7 @@ Resources:
   ScsSourceGemfireRoute:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub scs-sink-gemfire-route-${StackName}
+      ServiceName: !Sub scs-source-gemfire-route-${StackName}
       Cluster:
         Ref: EcsClusterArn
       TaskDefinition:
