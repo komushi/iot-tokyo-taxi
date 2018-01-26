@@ -79,6 +79,35 @@ Resources:
               awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: "ecs"
 
+  LogGroupFlatFileReader:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/flat-file-reader-${StackName}
+
+  DefFlatFileReader: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-flat-file-reader-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "flat-file-reader"
+          Image: "komushi/flat-file-reader:scs"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupFlatFileReader
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
 Outputs:
   DefMongoArn:
     Description: ARN of the Mongo task definition

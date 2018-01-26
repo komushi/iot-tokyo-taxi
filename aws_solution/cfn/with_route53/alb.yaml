@@ -10,6 +10,9 @@ Parameters:
   PublicSubnets:
     Description: Choose which PublicSubnets the Applicaion Load Balancer should be deployed to
     Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroup:
+    Description: Select the Security Group to apply to the Applicaion Load Balancer
+    Type: AWS::EC2::SecurityGroup::Id
 Resources:
   TargetGroupSourceHttp9000:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -106,6 +109,8 @@ Resources:
       Type: application
       Scheme: internet-facing
       Subnets: !Ref PublicSubnets
+      SecurityGroups: 
+        - !Ref SecurityGroup
 Outputs:
   LoadBalancerDns: 
     Description: A reference to the DNS of the LoadBalancer

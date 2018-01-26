@@ -9,6 +9,9 @@ Parameters:
   PublicSubnets:
     Description: Choose which subnets the Network Load Balancer should be deployed to
     Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroup:
+    Description: Select the Security Group to apply to the Applicaion Load Balancer
+    Type: AWS::EC2::SecurityGroup::Id
   EcsClusterName:
     Type: String
   HostedZoneName:
@@ -19,12 +22,12 @@ Resources:
   IamStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/iam.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/iam.yaml
 
   TaskDefBackendStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/task-def-backend.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/task-def-backend.yaml
       Parameters:
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
         ScsTaskRoleArn: !GetAtt IamStack.Outputs.ScsTaskRoleArn
@@ -34,22 +37,22 @@ Resources:
   ClbStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/clb.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/clb.yaml
       Parameters:
         StackName: !Ref AWS::StackName
         PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
+        SecurityGroup: !Ref SecurityGroup
 
   EcsBackendStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/ecs-backend-clb.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/ecs-backend-clb.yaml
       Parameters:
         StackName: !Ref AWS::StackName
         TaskDefMongoArn: !GetAtt TaskDefBackendStack.Outputs.DefMongoArn
         TaskDefGeodeArn: !GetAtt TaskDefBackendStack.Outputs.DefGeodeArn
         LoadBalancerGeodeName: !GetAtt ClbStack.Outputs.LoadBalancerGeodeName
         LoadBalancerMongoName: !GetAtt ClbStack.Outputs.LoadBalancerMongoName
-        # EcsClusterArn: "arn:aws:ecs:ap-northeast-1:042083552617:cluster/ec2-scs"
         EcsClusterArn: 
           !Join
           - ":"
@@ -63,7 +66,7 @@ Resources:
   TaskDefBackendStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/task-def-backend.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/task-def-backend.yaml
       Parameters:
         StackName: !Ref AWS::StackName
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
@@ -72,16 +75,17 @@ Resources:
   AlbStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/alb.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/alb.yaml
       Parameters:
         VpcId: !Ref VpcId
         PublicSubnets: !Join [ ",", !Ref PublicSubnets ]
+        SecurityGroup: !Ref SecurityGroup
         StackName: !Ref AWS::StackName
 
   TaskDefScsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/task-def-scs.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/task-def-scs.yaml
       Parameters:
         StackName: !Ref AWS::StackName
         EcsTaskExecutionRoleArn: !GetAtt IamStack.Outputs.EcsTaskExecutionRoleArn
@@ -92,7 +96,7 @@ Resources:
   EcsScsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/ecs-scs-alb.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/ecs-scs-alb.yaml
       Parameters:
         StackName: !Ref AWS::StackName
         TaskDefSourceHttp9000Arn: !GetAtt TaskDefScsStack.Outputs.DefSourceHttp9000Arn
@@ -120,7 +124,7 @@ Resources:
   Route53Stack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/route53.yaml
+      TemplateURL: https://cfn-template-group.s3.amazonaws.com/scs-iot/with_route53/route53.yaml
       Parameters:
         HostedZoneName: !Ref HostedZoneName
         LoadBalancerDns: !GetAtt AlbStack.Outputs.LoadBalancerDns

@@ -1,0 +1,44 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create ECS Task Definition
+
+Parameters:
+  EcsClusterArn:
+    Type: String
+  TargetGroupMongoArn:
+    Type: String
+  TargetGroupGeodeArn:
+    Type: String
+  TaskDefMongoArn:
+    Type: String
+  TaskDefGeodeArn:
+    Type: String
+
+Resources:
+  MongoService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: EcsClusterArn
+      TaskDefinition:
+        Ref: TaskDefMongoArn
+      DesiredCount: 1
+      LoadBalancers:
+      - TargetGroupArn:
+          Ref: TargetGroupMongoArn
+        ContainerPort: 27017
+        ContainerName: mongo-geojson
+
+  GeodeService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Ref: EcsClusterArn
+      TaskDefinition:
+        Ref: TaskDefGeodeArn
+      DesiredCount: 1
+      LoadBalancers:
+      - TargetGroupArn:
+          Ref: TargetGroupGeodeArn
+        ContainerPort: 40404
+        ContainerName: spring-boot-geode-server

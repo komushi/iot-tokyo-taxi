@@ -1,0 +1,61 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Stack to Create ElasticLoadBalancing Resources
+Parameters:
+  StackName:
+    Type: String
+  PublicSubnets:
+    Description: Choose which PublicSubnets the Load Balancer should be deployed to
+    Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroup:
+    Description: Select the Security Group to apply to the Load Balancer
+    Type: AWS::EC2::SecurityGroup::Id
+Resources:
+  LoadBalancerGeode:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      LoadBalancerName: !Sub clb-geode-${StackName}
+      Subnets: !Ref PublicSubnets
+      SecurityGroups: 
+        - !Ref SecurityGroup
+      Listeners:
+      - LoadBalancerPort: '40404'
+        InstancePort: '40404'
+        Protocol: TCP
+      HealthCheck:
+        Target: 'TCP:40404'
+        HealthyThreshold: '2'
+        UnhealthyThreshold: '10'
+        Interval: '60'
+        Timeout: '5'
+  LoadBalancerMongo:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      LoadBalancerName: !Sub clb-mongo-${StackName}
+      Subnets: !Ref PublicSubnets
+      SecurityGroups: 
+        - !Ref SecurityGroup
+      Listeners:
+      - LoadBalancerPort: '27017'
+        InstancePort: '27017'
+        Protocol: TCP
+      HealthCheck:
+        Target: 'TCP:27017'
+        HealthyThreshold: '2'
+        UnhealthyThreshold: '10'
+        Interval: '60'
+        Timeout: '5'
+Outputs:
+  LoadBalancerGeodeDns: 
+    Description: A reference to the DNS of the ClassicLoadBalancer
+    Value: !GetAtt LoadBalancerGeode.DNSName
+  LoadBalancerMongoDns: 
+    Description: A reference to the DNS of the ClassicLoadBalancer
+    Value: !GetAtt LoadBalancerMongo.DNSName
+  LoadBalancerGeodeName: 
+    Description: A reference to the Name of the ClassicLoadBalancer
+    Value: !Ref LoadBalancerGeode
+  LoadBalancerMongoName: 
+    Description: A reference to the Name of the ClassicLoadBalancer
+    Value: !Ref LoadBalancerMongo
+

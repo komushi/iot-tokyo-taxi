@@ -1,0 +1,119 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create ECS Task Definition
+
+Parameters:
+  StackName:
+    Type: String
+  EcsTaskExecutionRoleArn:
+    Type: String
+  ScsTaskRoleArn:
+    Type: String
+
+Resources:
+  LogGroupGeode:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/spring-boot-geode-server-${StackName}
+
+  DefGeode: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-geode-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "spring-boot-geode-server"
+          Image: "komushi/spring-boot-geode-server"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 40404
+              HostPort: 40404
+              Protocol: "tcp"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupGeode
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupMongo:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/mongo-geojson-${StackName}
+
+  DefMongo: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-mongo-geojson-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "mongo-geojson"
+          Image: "komushi/mongo-geojson"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 27017
+              HostPort: 27017
+              Protocol: "tcp"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupMongo
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupFlatFileReader:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/flat-file-reader-${StackName}
+
+  DefFlatFileReader: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-flat-file-reader-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "512"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "flat-file-reader"
+          Image: "komushi/flat-file-reader:latest"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupFlatFileReader
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+Outputs:
+  DefMongoArn:
+    Description: ARN of the Mongo task definition
+    Value:
+      Ref: DefMongo
+  DefGeodeArn:
+    Description: ARN of the Geode task definition
+    Value:
+      Ref: DefGeode

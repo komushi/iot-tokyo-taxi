@@ -7,12 +7,17 @@ Parameters:
   PublicSubnets:
     Description: Choose which PublicSubnets the Applicaion Load Balancer should be deployed to
     Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroup:
+    Description: Select the Security Group to apply to the Load Balancer
+    Type: AWS::EC2::SecurityGroup::Id
 Resources:
   LoadBalancerGeode:
     Type: AWS::ElasticLoadBalancing::LoadBalancer
     Properties:
       LoadBalancerName: !Sub clb-geode-${StackName}
       Subnets: !Ref PublicSubnets
+      SecurityGroups: 
+        - !Ref SecurityGroup
       Listeners:
       - LoadBalancerPort: '40404'
         InstancePort: '40404'
@@ -28,6 +33,8 @@ Resources:
     Properties:
       LoadBalancerName: !Sub clb-mongo-${StackName}
       Subnets: !Ref PublicSubnets
+      SecurityGroups: 
+        - !Ref SecurityGroup
       Listeners:
       - LoadBalancerPort: '27017'
         InstancePort: '27017'

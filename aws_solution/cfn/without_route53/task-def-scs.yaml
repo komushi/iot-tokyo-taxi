@@ -1,0 +1,451 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Stack to Create ECS Task Definition
+
+Parameters:
+  StackName:
+    Type: String
+  EcsTaskExecutionRoleArn:
+    Type: String
+  ScsTaskRoleArn:
+    Type: String
+  MongoDns:
+    Type: String
+  GeodeDns:
+    Type: String
+
+Resources:
+  LogGroupSourceHttp:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-source-http-${StackName}
+
+  DefSourceHttp9000: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-source-http-9000-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-source-http"
+          Image: "komushi/scs-source-http"
+          Command: 
+            - "--server.port=9000"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - "--spring.cloud.stream.default.contentType=text/plain"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=http_raw_${StackName}"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 9000
+              HostPort: 9000
+              Protocol: "http"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSourceHttp
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupProcessorGeocoding:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-processor-geocoding-reverse-${StackName}
+
+  DefProcessorGeocoding: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-processor-geocoding-reverse-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-processor-geocoding-reverse"
+          Image: "komushi/scs-processor-geocoding-reverse"
+          Command: 
+            - "--server.port=9100"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=http_raw_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=geocoding"
+            - "--spring.cloud.stream.bindings.input.contentType=text/plain"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=transform_geotuple_${StackName}"
+            - "--spring.cloud.stream.bindings.output.contentType=application/json"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - "--logging.level.info.cloudnative=TRACE"
+            - "--properties.mongo.port=27017"
+            - "--properties.mongo.database=geojson"
+            - "--properties.mongo.collection=blocks"
+            - "--properties.mongo.user=root"
+            - "--properties.mongo.password=keepitsimple"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+            - !Join
+              - ""
+              - - "--properties.mongo.hostName="
+                - !Ref MongoDns
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupProcessorGeocoding
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSinkStomp9210:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-sink-stomp-9210-${StackName}
+
+  DefSinkStomp9210: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-sink-stomp-9210-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-sink-stomp-multitopic"
+          Image: "komushi/scs-sink-stomp-multitopic"
+          Command: 
+            - "--server.port=9210"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=transform_geotuple_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=stomp"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - "--stomp.withsockjs=true"
+            - "--stomp.topicPath=/dropoffDistrictCode"
+            - "--logging.level.info.cloudnative=TRACE"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 9210
+              HostPort: 9210
+              Protocol: "http"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSinkStomp9210
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSinkGemfire:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-sink-gemfire-${StackName}
+
+  DefSinkGemfire: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-sink-gemfire-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-sink-gemfire"
+          Image: "komushi/scs-sink-gemfire"
+          Command: 
+            - "--server.port=9200"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=transform_geotuple_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=gemfire"
+            - "--spring.cloud.stream.bindings.input.contentType=application/json"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - "--gemfire.pool.connect-type=server"
+            - "--gemfire.pool.region-names=RegRaw"
+            - "--gemfire.json=true"
+            - "--gemfire.key-expression=payload.getField('uuid')"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+            - !Join
+              - ""
+              - - "--gemfire.pool.host-addresses="
+                - !Ref GeodeDns
+                - ":"
+                - "40404"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSinkGemfire
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSourceGemfireDistrict:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-source-gemfire-district-${StackName}
+
+  DefSourceGemfireDistrict:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-source-gemfire-district-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-source-gemfire"
+          Image: "komushi/scs-source-gemfire"
+          Command: 
+            - "--server.port=9310"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=gemfire_topdropoff_${StackName}"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - "--gemfire.pool.connect-type=server"
+            - "--gemfire.cacheEventExpression=newValue"
+            - "--gemfire.region.region-name=RegDropoffDistrictTop"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+            - !Join
+              - ""
+              - - "--gemfire.pool.host-addresses="
+                - !Ref GeodeDns
+                - ":"
+                - "40404"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSourceGemfireDistrict
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSourceGemfireRoute:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-source-gemfire-route-${StackName}
+
+  DefSourceGemfireRoute:
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-source-gemfire-route-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "1024"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "2048"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-source-gemfire"
+          Image: "komushi/scs-source-gemfire"
+          Command: 
+            - "--server.port=9300"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Sub "--spring.cloud.stream.bindings.output.destination=gemfire_topoute_${StackName}"
+            - "--spring.cloud.stream.bindings.output.producer.partitionKeyExpression=1"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - "--gemfire.pool.connect-type=server"
+            - "--gemfire.cacheEventExpression=newValue"
+            - "--gemfire.region.region-name=RegRouteTopTen"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+            - !Join
+              - ""
+              - - "--gemfire.pool.host-addresses="
+                - !Ref GeodeDns
+                - ":"
+                - "40404"
+          Essential: "true"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSourceGemfireRoute
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSinkStomp9400:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-sink-stomp-9400-${StackName}
+
+  DefSinkStomp9400: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-sink-stomp-9400-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-sink-stomp"
+          Image: "komushi/scs-sink-stomp"
+          Command: 
+            - "--server.port=9400"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=gemfire_topoute_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=stomp"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - "--stomp.withsockjs=true"
+            - "--stomp.topic=toproute"
+            - "--logging.level.info.cloudnative=TRACE"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 9400
+              HostPort: 9400
+              Protocol: "http"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSinkStomp9400
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+  LogGroupSinkStomp9410:
+    Type: "AWS::Logs::LogGroup"
+    Properties: 
+      LogGroupName: !Sub /ecs/scs-sink-stomp-9410-${StackName}
+
+  DefSinkStomp9410: 
+    Type: "AWS::ECS::TaskDefinition"
+    Properties: 
+      Family: !Sub def-sink-stomp-9410-${StackName}
+      RequiresCompatibilities:
+        - "EC2"
+      # Cpu: "512"
+      ExecutionRoleArn:
+        Ref: EcsTaskExecutionRoleArn
+      Memory: "1024"
+      TaskRoleArn:
+        Ref: ScsTaskRoleArn
+      ContainerDefinitions: 
+        - 
+          Name: "scs-sink-stomp"
+          Image: "komushi/scs-sink-stomp"
+          Command: 
+            - "--server.port=9410"
+            - "--spring.cloud.stream.defaultBinder=kinesis"
+            - !Sub "--spring.cloud.stream.bindings.input.destination=gemfire_topdropoff_${StackName}"
+            - "--spring.cloud.stream.bindings.input.group=stomp"
+            - !Sub "--spring.cloud.stream.kinesis.binder.checkpoint.table=checkpoint-${StackName}"
+            - "--spring.cloud.stream.kinesis.binder.autoAddShards=true"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.readCapacity=6"
+            - "--spring.cloud.stream.kinesis.binder.checkpoint.writeCapacity=6"
+            - "--stomp.withsockjs=true"
+            - "--stomp.topic=topdropoff"
+            - "--logging.level.info.cloudnative=TRACE"
+            - !Join
+              - ""
+              - - "--cloud.aws.region.static="
+                - !Ref "AWS::Region"
+          Essential: "true"
+          PortMappings:
+            -
+              ContainerPort: 9410
+              HostPort: 9410
+              Protocol: "http"
+          LogConfiguration: 
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref LogGroupSinkStomp9410
+              awslogs-region: !Ref "AWS::Region"
+              awslogs-stream-prefix: "ecs"
+
+Outputs:
+  DefSourceHttp9000Arn:
+    Value:
+      Ref: DefSourceHttp9000
+  DefProcessorGeocodingArn:
+    Value:
+      Ref: DefProcessorGeocoding
+  DefSinkStomp9210Arn:
+    Value:
+      Ref: DefSinkStomp9210
+  DefSinkGemfireArn:
+    Value:
+      Ref: DefSinkGemfire
+  DefSourceGemfireDistrictArn:
+    Value:
+      Ref: DefSourceGemfireDistrict
+  DefSourceGemfireRouteArn:
+    Value:
+      Ref: DefSourceGemfireRoute
+  DefSinkStomp9400Arn:
+    Value:
+      Ref: DefSinkStomp9400
+  DefSinkStomp9410Arn:
+    Value:
+      Ref: DefSinkStomp9410
