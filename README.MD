@@ -11,6 +11,7 @@ http://www.slideshare.net/LeiXu8/event-driven-streaming-analytics
 ## 1. Spring Cloud Stream
 * [Local Deployment with Spring Cloud Stream Apps](/LOCAL_SCS.MD)
 * [Docker Deployment with Spring Cloud Stream Apps](/DOCKER_SCS.MD)
+* [AWS ECS Deployment with Spring Cloud Stream Apps](/AWS_ECS_SCS.MD)
 
 ## 2. Spring Cloud Stream with Spring Cloud Data Flow
 ### Different Resource Management Options:
