@@ -1,41 +1,31 @@
 # 1. Import block-level polygon data of Tokyo to MongoDB
 
 ## 1-1. Start MongoDB Server
-
 ```
-mongod
-```
-
-Or
-
-```
-brew services start mongodb
-```
-
-Or
-
-```
-docker run -p 27017:27017 --name mongo mongo:3
+$ docker run -p 27017:27017 --name geojsonmongo mongo:3
 ```
 
 ## 1-2. Import data
 ```
-mongoimport --db geojson --collection blocks --type json --file "tokyo_23_brief_mongo.json"
+$ docker cp tokyo_23_brief_mongo.json geojsonmongo:/tmp/tokyo_23_brief_mongo.json
+$ docker exec geojsonmongo mongoimport -d geojson -c blocks --file /tmp/tokyo_23_brief_mongo.json
 ```
 
-TODO: how to import data to mongo in docker
+## 1-3. Add index and test
+### 1-3-1. Login to the interactive mongo shell
+```
+$ docker exec -it geojsonmongo mongo
+```
 
-## 1-3. Add geometry index in mongo shell
-
+### 1-3-2. Add geometry index
 ```
 use geojson
 
 db.blocks.createIndex({ geometry: "2dsphere" })
 ```
 
-### 1-3-1. If necessary create a user at geojson. Optional.
+### 1-3-3. If necessary create a user at geojson. Optional.
 ```
-
 use geojson
 
 db.createUser(
@@ -47,8 +37,7 @@ db.createUser(
 ) 
 ```
 
-## 1-4. Test geoIntersects query in mongo shell
-
+## 1-3-4. Test geoIntersects query
 ```
 db.blocks.find(
    {

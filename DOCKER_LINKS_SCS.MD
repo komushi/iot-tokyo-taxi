@@ -96,7 +96,7 @@ http://localhost:8080/#/tokyo23TopRoutes
 # 3. Sending data
 
 ```
-$ java -jar FlatFileReader-0.1.0-jar-with-dependencies.jar --file=./data/sample_data_tokyo_23.csv --url http://localhost:9000 --mode=bulk --interval=100
+$ docker run komushi/flat-file-reader --url=http://<local_lan_ip>:9000 --mode=bulk --interval=100
 ```
 
 | Fields        | Descriptions | Sample Data |
